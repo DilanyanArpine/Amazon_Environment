@@ -1,0 +1,50 @@
+import unittest
+import time
+from selenium import webdriver
+from sources.login__.loginPage_ import LoginPage
+from common import data_
+from sources.navigationBar__.navigationBar_ import NavigationBar
+
+
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+
+
+class LoginTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+        self.driver.delete_all_cookies()
+        self.driver.implicitly_wait(12)
+        self.driver.maximize_window()
+        self.driver.get(data_.urlSignIn)
+        self.loginPageObj = LoginPage(self.driver)
+
+    def test_positive_login(self):
+        self.loginPageObj.fill_login_filed(data_.loginDataValidArpine["username"])
+        self.loginPageObj.press_continue_button()
+        self.loginPageObj.fill_password_field(data_.loginDataValidArpine["password"])
+        time.sleep(6)
+        self.loginPageObj.press_signin_button()
+
+        self.navigationBarPageObj = NavigationBar(self.driver)
+        self.navigationBarPageObj.hover_account_modal_lists()
+
+        """ Assert that the login is successful """
+        assert self.navigationBarPageObj.check_logged_user_data(), "ERROR"
+
+    def test_negative_login(self):
+        self.loginPageObj.fill_login_filed(data_.loginDataValidArpine["username"])
+        self.loginPageObj.press_continue_button()
+        self.loginPageObj.fill_password_field(data_.loginDataWithInvalidPasswordArpine["password"])
+        time.sleep(6)
+        self.loginPageObj.press_signin_button()
+
+        """ If the password when you enter an invalid password"""
+        assert self.loginPageObj.check_invalid_password_message(), "TRY AGAIN"
+
+    def tearDown(self) -> None:
+        self.driver.close()
+
+
+if __name__ == "__main__":
+    unittest.main()
